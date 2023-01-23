@@ -14,6 +14,19 @@ async function upsert(enrollmentId: number, createdAddress: CreateAddressParams,
   });
 }
 
+export type typeOfAddress = {
+  cep?: string;
+  logradouro?: string;
+  complemento?: string;
+  bairro?: string;
+  cidade?: string;
+  uf: string;
+  ibge?: string;
+  gia?: string;
+  ddd?: string;
+  siafi?: string;
+};
+
 export type CreateAddressParams = Omit<Address, "id" | "createdAt" | "updatedAt" | "enrollmentId">;
 export type UpdateAddressParams = CreateAddressParams;
 
