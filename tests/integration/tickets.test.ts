@@ -207,6 +207,7 @@ describe("POST /tickets", () => {
         .post("/tickets")
         .set("Authorization", `Bearer ${token}`)
         .send({ ticketTypeId: ticketType.id });
+      console.log("TESTE:", ticketType.id);
 
       expect(response.status).toEqual(httpStatus.CREATED);
       expect(response.body).toEqual({
