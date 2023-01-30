@@ -26,13 +26,13 @@ export async function getPaymentByTicketId(req: AuthenticatedRequest, res: Respo
 }
 
 export async function postPayment(req: AuthenticatedRequest, res: Response) {
-  try {
-    const { userId } = req;
-    const {
-      ticketId,
-      cardData,
-    } = req.body;
+  const { userId } = req;
+  const {
+    ticketId,
+    cardData,
+  } = req.body;
 
+  try {
     if (!ticketId || !cardData) {
       return res.sendStatus(httpStatus.BAD_REQUEST);
     }

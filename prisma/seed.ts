@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import dayjs from "dayjs";
 const prisma = new PrismaClient();
+import { createEnrollmentWithAddress, createUser, createTicketType, createTicket } from "../tests/factories";
+import { generateValidToken } from "../tests/helpers";
 
 async function main() {
   let event = await prisma.event.findFirst();
@@ -14,10 +16,17 @@ async function main() {
         endsAt: dayjs().add(21, "days").toDate(),
       },
     });
+
+    const user = await createUser();
+    const token = await generateValidToken(user);
+    const enrollment = await createEnrollmentWithAddress(user);
+    const ticketType = await createTicketType();
+
   }
 
   console.log({ event });
 }
+
 
 main()
   .catch((e) => {

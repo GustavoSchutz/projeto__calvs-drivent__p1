@@ -1,5 +1,5 @@
 import { AuthenticatedRequest } from "@/middlewares";
-import ticketsService from "@/services/tickets-service";
+import ticketsService, { TicketDataType } from "@/services/tickets-service";
 import { TicketType } from "@prisma/client";
 import { Response } from "express";
 import httpStatus from "http-status";
@@ -33,7 +33,7 @@ export async function postTicket(req: AuthenticatedRequest, res: Response) {
   }
 
   try {
-    const newTicket = await ticketsService.postTicket(ticketTypeId, userId);
+    const newTicket: TicketDataType = await ticketsService.postTicket(ticketTypeId, userId);
     return res.sendStatus(httpStatus.CREATED).send(newTicket);
   } catch (error) {
     return res.sendStatus(httpStatus.NOT_FOUND);
