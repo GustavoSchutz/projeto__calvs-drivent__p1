@@ -48,8 +48,6 @@ async function postTicket(ticketTypeId: number, userId: number): Promise<TicketD
   }
   const enrollmentId: number = enrollment.id;
 
-  console.log("enrollmentId: ", enrollmentId);
-
   const newTicket = await ticketRepository.postNewTicketByTicketType(ticketTypeId, enrollmentId);
 
   return newTicket;
