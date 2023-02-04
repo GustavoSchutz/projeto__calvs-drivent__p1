@@ -1,15 +1,15 @@
 import { AuthenticatedRequest } from "@/middlewares";
-import ticketsService, { TicketDataType } from "@/services/tickets-service";
-import { TicketType } from "@prisma/client";
+import ticketService from "@/services/tickets-service";
 import { Response } from "express";
 import httpStatus from "http-status";
 
-export async function getTicketTypes(_req: AuthenticatedRequest, res: Response) {
+export async function getTicketTypes(req: AuthenticatedRequest, res: Response) {
   try {
-    const ticketTypes = await ticketsService.getTicketTypes();
+    const ticketTypes = await ticketService.getTicketTypes();
+
     return res.status(httpStatus.OK).send(ticketTypes);
   } catch (error) {
-    return res.status(httpStatus.NOT_FOUND).send({});
+    return res.sendStatus(httpStatus.NO_CONTENT);
   }
 }
 
@@ -17,24 +17,28 @@ export async function getTickets(req: AuthenticatedRequest, res: Response) {
   const { userId } = req;
 
   try {
-    const tickets = await ticketsService.getTicketByEnrollmentId(userId);
-    return res.status(httpStatus.OK).send(tickets);
+    const ticketTypes = await ticketService.getTicketByUserId(userId);
+
+    return res.status(httpStatus.OK).send(ticketTypes);
   } catch (error) {
-    return res.status(httpStatus.NOT_FOUND).send({});
+    return res.sendStatus(httpStatus.NOT_FOUND);
   }
 }
 
-export async function postTicket(req: AuthenticatedRequest, res: Response) {
-  const ticketTypeId: TicketType["id"] = req.body.ticketTypeId; 
-  const userId = req.userId;
+export async function createTicket(req: AuthenticatedRequest, res: Response) {
+  const { userId } = req;
+
+  //TODO validação do JOI
+  const { ticketTypeId } = req.body;
 
   if (!ticketTypeId) {
     return res.sendStatus(httpStatus.BAD_REQUEST);
   }
 
   try {
-    const newTicket: TicketDataType = await ticketsService.postTicket(ticketTypeId, userId);
-    return res.sendStatus(httpStatus.CREATED).send(newTicket);
+    const ticketTypes = await ticketService.createTicket(userId, ticketTypeId);
+
+    return res.status(httpStatus.CREATED).send(ticketTypes);
   } catch (error) {
     return res.sendStatus(httpStatus.NOT_FOUND);
   }

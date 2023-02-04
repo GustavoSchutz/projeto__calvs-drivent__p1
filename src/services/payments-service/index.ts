@@ -1,23 +1,15 @@
 import { notFoundError, unauthorizedError } from "@/errors";
-import paymentRepository from "@/repositories/payment-repository";
+import paymentRepository, { PaymentParams } from "@/repositories/payment-repository";
 import ticketRepository from "@/repositories/ticket-repository";
 import enrollmentRepository from "@/repositories/enrollment-repository";
 
-export type CardType = {
-  issuer: string,
-  number: number,
-  name: string,
-  expirationDate: Date,
-  cvv: number
-}
-
 async function verifyTicketAndEnrollment(ticketId: number, userId: number) {
-  const ticket = await ticketRepository.getTicketById(ticketId);
+  const ticket = await ticketRepository.findTickeyById(ticketId);
 
   if (!ticket) {
     throw notFoundError();
   }
-  const enrollment = await enrollmentRepository.getEnrollmentById(ticket.enrollmentId);
+  const enrollment = await enrollmentRepository.findById(ticket.enrollmentId);
 
   if (enrollment.userId !== userId) {
     throw unauthorizedError();
@@ -27,7 +19,7 @@ async function verifyTicketAndEnrollment(ticketId: number, userId: number) {
 async function getPaymentByTicketId(userId: number, ticketId: number) {
   await verifyTicketAndEnrollment(ticketId, userId);
 
-  const payment = await paymentRepository.getPaymentByTicketId(ticketId);
+  const payment = await paymentRepository.findPaymentByTicketId(ticketId);
 
   if (!payment) {
     throw notFoundError();
@@ -35,10 +27,10 @@ async function getPaymentByTicketId(userId: number, ticketId: number) {
   return payment;
 }
 
-async function postPayment(ticketId: number, userId: number, cardData: CardType) {
+async function paymentProcess(ticketId: number, userId: number, cardData: CardPaymentParams) {
   await verifyTicketAndEnrollment(ticketId, userId);
 
-  const ticket = await ticketRepository.getTicketWithTypeById(ticketId);
+  const ticket = await ticketRepository.findTickeWithTypeById(ticketId);
 
   const paymentData = {
     ticketId,
@@ -47,16 +39,24 @@ async function postPayment(ticketId: number, userId: number, cardData: CardType)
     cardLastDigits: cardData.number.toString().slice(-4),
   };
 
-  const payment = await paymentRepository.postPayment(ticketId, paymentData);
+  const payment = await paymentRepository.createPayment(ticketId, paymentData);
 
-  await ticketRepository.ticketUpdatePayment(ticketId);
+  await ticketRepository.ticketProcessPayment(ticketId);
 
   return payment;
 }
 
+export type CardPaymentParams = {
+  issuer: string,
+  number: number,
+  name: string,
+  expirationDate: Date,
+  cvv: number
+}
+
 const paymentService = {
   getPaymentByTicketId,
-  postPayment
+  paymentProcess,
 };
 
 export default paymentService;
