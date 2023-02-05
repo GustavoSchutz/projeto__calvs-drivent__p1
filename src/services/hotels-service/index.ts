@@ -1,3 +1,4 @@
+import hotelRepository from "@/repositories/hotel-repository";
 
 async function getHotels(userId: number) {
   await getHotels(userId);
