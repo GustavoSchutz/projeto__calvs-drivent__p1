@@ -4,7 +4,7 @@ import httpStatus from "http-status";
 import supertest from "supertest";
 import * as jwt from "jsonwebtoken";
 import { cleanDb, generateValidToken } from "../helpers";
-import { createEnrollmentWithAddress, createTicketTypeRemote, createUser, createTicket, createPayment, createTicketTypeWithHotel, newHotel } from "../factories";
+import { createEnrollmentWithAddress, createTicketTypeRemote, createUser, createTicket, createPayment, createTicketTypeWithHotel, newHotel, newRoomWithHotelId } from "../factories";
 import { TicketStatus } from "@prisma/client";
 
 beforeAll(async () => {
@@ -141,6 +141,83 @@ describe("GET /hotels/:hotelId", () => {
       const response = await server.get("/hotels/1").set("Authorization", `Bearer ${token}`);
 
       expect(response.status).toEqual(httpStatus.PAYMENT_REQUIRED);
+    });
+
+    it("should respond with status 404 when user has no enrollment", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const ticketType = await createTicketTypeRemote();
+
+      const response = await server.get("/hotels/1").set("Authorization", `Bearer ${token}`);
+      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+    });
+
+    it("should respond with status 404 for invalid hotel id", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const enrollment = await createEnrollmentWithAddress(user);
+      const ticketType = await createTicketTypeWithHotel();
+      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
+      const payment = await createPayment(ticket.id, ticketType.price);
+      const hotel = await newHotel();
+
+      const response = await server.get("/hotels/404").set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toEqual(httpStatus.NOT_FOUND);
+    });
+
+    it("should respond with status 200 and a list of rooms", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const enrollment = await createEnrollmentWithAddress(user);
+      const ticketType = await createTicketTypeWithHotel();
+      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
+      const payment = await createPayment(ticket.id, ticketType.price);
+      const hotel = await newHotel();
+      const room = await newRoomWithHotelId(hotel.id);
+
+      const response = await server.get(`/hotels/${hotel.id}`).set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toEqual(httpStatus.OK);
+
+      expect(response.body).toEqual({
+        id: hotel.id,
+        name: hotel.name,
+        image: hotel.image,
+        createdAt: hotel.createdAt.toISOString(),
+        updatedAt: hotel.updatedAt.toISOString(),
+        Rooms: [{
+          id: room.id,
+          name: room.name,
+          capacity: room.capacity,
+          hotelId: hotel.id,
+          createdAt: room.createdAt.toISOString(),
+          updatedAt: room.updatedAt.toISOString()
+        }]
+      });
+    });
+
+    it("should respond with status 200 and hotel with an empty array in rooms", async () => {
+      const user = await createUser();
+      const token = await generateValidToken(user);
+      const enrollment = await createEnrollmentWithAddress(user);
+      const ticketType = await createTicketTypeWithHotel();
+      const ticket = await createTicket(enrollment.id, ticketType.id, TicketStatus.PAID);
+      const payment = await createPayment(ticket.id, ticketType.price);
+      const hotel = await newHotel();
+
+      const response = await server.get(`/hotels/${hotel.id}`).set("Authorization", `Bearer ${token}`);
+
+      expect(response.status).toEqual(httpStatus.OK);
+
+      expect(response.body).toEqual({
+        id: hotel.id,
+        name: hotel.name,
+        image: hotel.image,
+        createdAt: hotel.createdAt.toISOString(),
+        updatedAt: hotel.updatedAt.toISOString(),
+        Rooms: []
+      });
     });
   });
 });
